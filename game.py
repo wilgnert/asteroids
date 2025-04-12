@@ -1,5 +1,6 @@
 import pygame
 from constants import *
+from player import Player
 
 class Game:
   __screen_width = SCREEN_WIDTH
@@ -7,19 +8,33 @@ class Game:
   __screen: pygame.Surface = None
   __is_running: bool = False
   __clock: pygame.time.Clock = None
+  __player: Player = None
+  __updatable: pygame.sprite.Group = None
+  __drawable: pygame.sprite.Group = None
+  __inputable: pygame.sprite.Group = None
   __dt = 0
-  __t = 0
 
   def run():
     if Game.__is_running:
       return
     Game.__is_running = True
     pygame.init()
-    Game.__screen = pygame.display.set_mode((Game.__screen_width, Game.__screen_height))
+    Game.__screen = pygame.display.set_mode(
+      (Game.__screen_width, Game.__screen_height)
+    )
     Game.__clock = pygame.time.Clock()
     Game.__dt = 0
-    Game.__t = 0
-
+    Game.__updatable = pygame.sprite.Group()
+    Game.__drawable = pygame.sprite.Group()
+    Game.__inputable = pygame.sprite.Group()
+    player = Player(
+      Game.__screen_width // 2,
+      Game.__screen_height // 2,
+      PLAYER_RADIUS
+    )
+    Game.__updatable.add(player)
+    Game.__drawable.add(player)
+    Game.__inputable.add(player)
 
     Game.__loop()
   
@@ -37,17 +52,19 @@ class Game:
         exit()
 
   def __input():
-    pass
+    keys = pygame.key.get_pressed()
+    for inputable in Game.__inputable:
+      inputable.input(keys, dt=Game.__dt)
 
   def __update():
+    for updatable in Game.__updatable:
+      updatable.update(Game.__dt)
     Game.__dt = Game.__clock.tick(60) / 1000.0
 
   def __render():
     Game.__screen.fill((0, 0, 0))  # Fill the screen with black
-    font = pygame.font.Font(None, 36)
-    text = font.render(f"Deltatime: {int(Game.__dt * 1000)} ms", True, (255, 255, 255))
-    text_rect = text.get_rect(center=(Game.__screen_width // 2, Game.__screen_height // 2)) 
-    Game.__screen.blit(text, text_rect)  # Draw the text on the screen
+    for drawable in Game.__drawable:
+      drawable.draw(Game.__screen)
     
 
     pygame.display.flip()  # Update the display
