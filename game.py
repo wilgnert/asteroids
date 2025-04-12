@@ -3,6 +3,7 @@ from constants import *
 from player import Player
 from asteroid import Asteroid
 from asteroidfield import AsteroidField
+from shot import Shot
 
 class Game:
   __screen_width = SCREEN_WIDTH
@@ -11,10 +12,12 @@ class Game:
   __is_running: bool = False
   __clock: pygame.time.Clock = None
   __player: Player = None
+  __asteroid_field: AsteroidField = None
   __updatable: pygame.sprite.Group = None
   __drawable: pygame.sprite.Group = None
   __inputable: pygame.sprite.Group = None
   __asteroids: pygame.sprite.Group = None
+  __shots: pygame.sprite.Group = None
   __dt = 0
 
   def run():
@@ -31,15 +34,16 @@ class Game:
     Game.__drawable = pygame.sprite.Group()
     Game.__inputable = pygame.sprite.Group()
     Game.__asteroids = pygame.sprite.Group()
+    Game.__shots = pygame.sprite.Group()
     Player.containers = Game.__updatable, Game.__drawable, Game.__inputable
+    Asteroid.containers = Game.__updatable, Game.__drawable, Game.__asteroids
+    AsteroidField.containers = Game.__updatable
+    Shot.containers = Game.__updatable, Game.__drawable, Game.__shots
+    Game.__asteroid_field = AsteroidField()
     Game.__player = Player(
       Game.__screen_width // 2,
       Game.__screen_height // 2,
-      PLAYER_RADIUS
     )
-    Asteroid.containers = Game.__updatable, Game.__drawable, Game.__asteroids
-    AsteroidField.containers = Game.__updatable
-    AsteroidField()
 
     Game.__loop()
   
@@ -72,6 +76,11 @@ class Game:
         print("Game over!")
         pygame.quit()
         exit()
+
+      for shot in Game.__shots:
+        if asteroid.collide(shot):
+          Game.__asteroid_field.split(asteroid)
+          shot.kill()
 
 
   def __render():
