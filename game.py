@@ -1,6 +1,8 @@
 import pygame
 from constants import *
 from player import Player
+from asteroid import Asteroid
+from asteroidfield import AsteroidField
 
 class Game:
   __screen_width = SCREEN_WIDTH
@@ -12,6 +14,7 @@ class Game:
   __updatable: pygame.sprite.Group = None
   __drawable: pygame.sprite.Group = None
   __inputable: pygame.sprite.Group = None
+  __asteroids: pygame.sprite.Group = None
   __dt = 0
 
   def run():
@@ -27,14 +30,16 @@ class Game:
     Game.__updatable = pygame.sprite.Group()
     Game.__drawable = pygame.sprite.Group()
     Game.__inputable = pygame.sprite.Group()
-    player = Player(
+    Game.__asteroids = pygame.sprite.Group()
+    Player.containers = Game.__updatable, Game.__drawable, Game.__inputable
+    Game.__player = Player(
       Game.__screen_width // 2,
       Game.__screen_height // 2,
       PLAYER_RADIUS
     )
-    Game.__updatable.add(player)
-    Game.__drawable.add(player)
-    Game.__inputable.add(player)
+    Asteroid.containers = Game.__updatable, Game.__drawable, Game.__asteroids
+    AsteroidField.containers = Game.__updatable
+    AsteroidField()
 
     Game.__loop()
   
@@ -59,7 +64,15 @@ class Game:
   def __update():
     for updatable in Game.__updatable:
       updatable.update(Game.__dt)
+      
     Game.__dt = Game.__clock.tick(60) / 1000.0
+
+    for asteroid in Game.__asteroids:
+      if asteroid.collide(Game.__player):
+        print("Game over!")
+        pygame.quit()
+        exit()
+
 
   def __render():
     Game.__screen.fill((0, 0, 0))  # Fill the screen with black
